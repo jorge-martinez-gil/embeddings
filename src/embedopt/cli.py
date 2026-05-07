@@ -10,6 +10,7 @@ import typer
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig, OmegaConf
 
+from embedopt import __version__
 from embedopt.pipelines.smoke import SmokePipelineConfig, run_smoke_pipeline
 
 app = typer.Typer(help="EmbedOpt command line interface")
@@ -45,6 +46,12 @@ cs.store(name="base_config", node=AppConfig)
 def run_command() -> None:
     """Run an experiment using Hydra config files."""
     _hydra_entry()
+
+
+@app.command("version")
+def version_command() -> None:
+    """Print the embedopt version."""
+    typer.echo(__version__)
 
 
 def _get_config_path() -> str:

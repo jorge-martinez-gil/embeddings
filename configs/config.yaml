@@ -1,0 +1,4 @@
+defaults:
+  - model: sentence_transformer
+  - eval: smoke_metric
+  - _self_

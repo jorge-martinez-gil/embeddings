@@ -41,8 +41,6 @@ def average_best_cosine_similarity(
 
     best_scores: list[float] = []
     for qv in query_vectors:
-        if len(qv) == 0:
-            raise ValueError("Query vector cannot be empty")
         best = max(cosine_similarity(qv, cv) for cv in corpus_vectors)
         best_scores.append(best)
 

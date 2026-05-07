@@ -42,9 +42,9 @@ cs.store(name="base_config", node=AppConfig)
 
 
 @app.command("run")
-def run_command(config_name: str = "config") -> None:
+def run_command() -> None:
     """Run an experiment using Hydra config files."""
-    _hydra_run(config_name=config_name)
+    _hydra_entry()
 
 
 def _get_config_path() -> str:
@@ -55,12 +55,6 @@ def _get_config_path() -> str:
 @hydra.main(version_base=None, config_path=_get_config_path(), config_name="config")
 def _hydra_entry(cfg: DictConfig) -> None:
     _run_from_cfg(cfg)
-
-
-def _hydra_run(config_name: str) -> None:
-    if config_name != "config":
-        raise ValueError("Only config_name='config' is currently supported")
-    _hydra_entry()
 
 
 def _run_from_cfg(cfg: DictConfig) -> None:

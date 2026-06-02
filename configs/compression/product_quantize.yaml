@@ -1,0 +1,4 @@
+name: product_quantize
+n_subspaces: 8
+n_bits: 8
+seed: 0

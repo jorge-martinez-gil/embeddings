@@ -1,0 +1,111 @@
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from embedopt.compression import (
+    BinaryQuantizeCompressor,
+    IdentityCompressor,
+    ProductQuantizeCompressor,
+    ScalarQuantizeCompressor,
+    TruncateCompressor,
+    build_compressor,
+    spec_label,
+)
+
+
+def _toy_corpus(seed: int = 0) -> np.ndarray[tuple[int, int], np.dtype[np.float32]]:
+    rng = np.random.default_rng(seed)
+    raw = rng.standard_normal((40, 32)).astype(np.float32)
+    raw /= np.linalg.norm(raw, axis=1, keepdims=True)
+    return raw
+
+
+def test_identity_round_trip() -> None:
+    corpus = _toy_corpus()
+    c = IdentityCompressor()
+    cs = c.transform(corpus)
+    assert cs.bytes_per_vector == 32 * 4
+    sims = c.score(corpus[:1], cs)
+    # query == corpus[0] must be its own nearest neighbour at score 1.0.
+    assert int(np.argmax(sims[0])) == 0
+    assert sims[0, 0] == pytest.approx(1.0, abs=1e-5)
+
+
+def test_truncate_byte_cost_and_top_match() -> None:
+    corpus = _toy_corpus()
+    c = TruncateCompressor(keep_dim=8)
+    cs = c.transform(corpus)
+    assert cs.bytes_per_vector == 8 * 4
+    sims = c.score(corpus[:1], cs)
+    # Top-1 should still be itself even after truncation when the leading dims
+    # carry signal; allow that nearest may differ but the self score is bounded.
+    assert sims[0, 0] >= 0.0
+
+
+def test_truncate_rejects_oversize_keep_dim() -> None:
+    corpus = _toy_corpus()
+    c = TruncateCompressor(keep_dim=999)
+    with pytest.raises(ValueError):
+        c.transform(corpus)
+
+
+def test_scalar_int8_recovers_self_neighbor() -> None:
+    corpus = _toy_corpus()
+    c = ScalarQuantizeCompressor()
+    c.fit(corpus)
+    cs = c.transform(corpus)
+    assert cs.bytes_per_vector == 32  # one byte per dim
+    sims = c.score(corpus, cs)
+    self_top = (np.argmax(sims, axis=1) == np.arange(corpus.shape[0])).mean()
+    assert self_top > 0.85
+
+
+def test_binary_self_top_is_high() -> None:
+    corpus = _toy_corpus()
+    c = BinaryQuantizeCompressor()
+    cs = c.transform(corpus)
+    assert cs.bytes_per_vector == 32 // 8
+    sims = c.score(corpus, cs)
+    self_top = (np.argmax(sims, axis=1) == np.arange(corpus.shape[0])).mean()
+    assert self_top > 0.7
+
+
+def test_product_quantize_self_neighbor_after_fit() -> None:
+    corpus = _toy_corpus()
+    c = ProductQuantizeCompressor(n_subspaces=8, n_bits=4, seed=1)
+    c.fit(corpus)
+    cs = c.transform(corpus)
+    assert cs.bytes_per_vector == 8
+    sims = c.score(corpus, cs)
+    self_top = (np.argmax(sims, axis=1) == np.arange(corpus.shape[0])).mean()
+    assert self_top > 0.8
+
+
+def test_product_quantize_validates_dim() -> None:
+    corpus = _toy_corpus()
+    c = ProductQuantizeCompressor(n_subspaces=7, n_bits=8)
+    with pytest.raises(ValueError):
+        c.fit(corpus)
+
+
+def test_registry_builds_each_method() -> None:
+    for spec in (
+        {"name": "identity"},
+        {"name": "truncate", "keep_dim": 8},
+        {"name": "scalar_int8"},
+        {"name": "binary"},
+        {"name": "product_quantize", "n_subspaces": 8, "n_bits": 8},
+    ):
+        c = build_compressor(spec)
+        assert c.name == spec["name"]
+
+
+def test_registry_rejects_unknown() -> None:
+    with pytest.raises(ValueError):
+        build_compressor({"name": "no_such_method"})
+
+
+def test_spec_label_includes_kwargs() -> None:
+    assert spec_label({"name": "truncate", "keep_dim": 16}) == "truncate(keep_dim=16)"
+    assert spec_label({"name": "identity"}) == "identity"

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "embedopt"
-version = "0.1.0"
+version = "0.2.0"
 description = "Multi-objective text embedding optimization research framework"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,6 +19,17 @@ dependencies = [
 [project.optional-dependencies]
 models = [
   "sentence-transformers>=3.0.1",
+]
+paper = [
+  "sentence-transformers>=3.0.1",
+  "torch>=2.2.0",
+  "datasets>=2.20.0",
+  "pandas>=2.2.0",
+  "matplotlib>=3.8.0",
+  "tqdm>=4.66.0",
+]
+index = [
+  "faiss-cpu>=1.8.0",
 ]
 dev = [
   "black>=24.8.0",
@@ -49,6 +60,7 @@ line_length = 100
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+extend-exclude = ["notebooks"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
@@ -60,6 +72,14 @@ packages = ["embedopt"]
 
 [[tool.mypy.overrides]]
 module = ["sentence_transformers", "sentence_transformers.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["datasets", "datasets.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["faiss", "faiss.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

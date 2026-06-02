@@ -1,0 +1,3 @@
+name: retrieval_synthetic
+n_queries_per_topic: 4
+seed: 0

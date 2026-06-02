@@ -1,0 +1,22 @@
+# Composed experiment: multi-objective compression sweep.
+defaults:
+  - /model: sentence_transformer
+  - /dataset: retrieval_synthetic
+  - /profiling: default
+
+backbone_dim: 128
+seed: 0
+k: 10
+primary_metric: ndcg_at_10
+objectives:
+  - { name: ndcg_at_10, sense: max }
+  - { name: bytes_per_vector, sense: min }
+  - { name: query_latency_ms, sense: min }
+search_space:
+  - { name: identity }
+  - { name: truncate, keep_dim: 32 }
+  - { name: truncate, keep_dim: 64 }
+  - { name: scalar_int8 }
+  - { name: binary }
+  - { name: product_quantize, n_subspaces: 8, n_bits: 8 }
+  - { name: product_quantize, n_subspaces: 16, n_bits: 8 }

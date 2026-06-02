@@ -1,0 +1,95 @@
+"""Per-query metrics and statistical-significance helpers.
+
+The headline-number tables in the paper need (a) per-query metric arrays so we
+can compute paired-bootstrap confidence intervals, and (b) a CI estimator that
+controls for the same query distribution across two systems. Both live here so
+the rest of the evaluation module can stay focused on aggregate metrics.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+
+import numpy as np
+
+from embedopt.evaluation.metrics import QrelMap, _topk_indices  # type: ignore[attr-defined]
+from embedopt.utils.types import FloatArray
+
+
+@dataclass(slots=True, frozen=True)
+class BootstrapCI:
+    """Paired-bootstrap confidence interval on a per-query metric delta."""
+
+    mean_delta: float
+    lower: float
+    upper: float
+    alpha: float
+
+
+def per_query_ndcg_at_k(scores: FloatArray, qrels: QrelMap, k: int) -> dict[int, float]:
+    """Per-query nDCG@k. Returns a dict ``qid -> ndcg`` for queries with relevance."""
+    rankings = _topk_indices(scores, k)
+    out: dict[int, float] = {}
+    for qid, qrel in qrels.items():
+        if not any(r > 0 for r in qrel.values()):
+            continue
+        gains = np.array(
+            [(2.0 ** qrel.get(int(d), 0.0)) - 1.0 for d in rankings[qid]],
+            dtype=np.float64,
+        )
+        discounts = 1.0 / np.log2(np.arange(2, gains.size + 2, dtype=np.float64))
+        dcg = float((gains * discounts).sum())
+        ideal_rels = sorted(qrel.values(), reverse=True)[:k]
+        ideal_gains = np.array([(2.0**r) - 1.0 for r in ideal_rels], dtype=np.float64)
+        ideal_disc = 1.0 / np.log2(np.arange(2, ideal_gains.size + 2, dtype=np.float64))
+        idcg = float((ideal_gains * ideal_disc).sum())
+        out[int(qid)] = dcg / idcg if idcg > 0 else 0.0
+    return out
+
+
+def per_query_recall_at_k(scores: FloatArray, qrels: QrelMap, k: int) -> dict[int, float]:
+    """Per-query Recall@k."""
+    rankings = _topk_indices(scores, k)
+    out: dict[int, float] = {}
+    for qid, qrel in qrels.items():
+        relevant = {doc for doc, rel in qrel.items() if rel > 0}
+        if not relevant:
+            continue
+        topk = rankings[qid]
+        hit = sum(1 for d in topk if d in relevant)
+        out[int(qid)] = hit / len(relevant)
+    return out
+
+
+def paired_bootstrap_ci(
+    a_per_query: Mapping[int, float],
+    b_per_query: Mapping[int, float],
+    *,
+    n_resamples: int = 2000,
+    alpha: float = 0.05,
+    seed: int = 0,
+) -> BootstrapCI:
+    """Two-sided paired-bootstrap CI on the *mean per-query delta* ``a - b``.
+
+    Only queries present in *both* mappings contribute, which guarantees the
+    pairing assumption holds even when one system fails on some queries.
+    """
+    common = sorted(set(a_per_query) & set(b_per_query))
+    if len(common) < 2:
+        raise ValueError("Need at least 2 paired queries for a bootstrap CI")
+    deltas = np.array([a_per_query[q] - b_per_query[q] for q in common], dtype=np.float64)
+    rng = np.random.default_rng(seed)
+    n = deltas.size
+    means = np.empty(n_resamples, dtype=np.float64)
+    for i in range(n_resamples):
+        idx = rng.integers(0, n, size=n)
+        means[i] = float(deltas[idx].mean())
+    lower = float(np.quantile(means, alpha / 2.0))
+    upper = float(np.quantile(means, 1.0 - alpha / 2.0))
+    return BootstrapCI(
+        mean_delta=float(deltas.mean()),
+        lower=lower,
+        upper=upper,
+        alpha=alpha,
+    )

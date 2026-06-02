@@ -1,0 +1,182 @@
+"""BEIR dataset adapter.
+
+Supports two layouts:
+
+1. **Local BEIR layout** (recommended for reproducibility): a directory with
+   ``corpus.jsonl``, ``queries.jsonl``, and ``qrels/test.tsv`` produced by the
+   official BEIR data release. Pass the dataset root directory to
+   :func:`load_beir_dataset_local`.
+
+2. **HuggingFace** ``BeIR/<name>`` repos via the optional ``datasets`` library.
+   Pass the dataset short name (``"scifact"``, ``"nfcorpus"``, ...) to
+   :func:`load_beir_dataset_hf`. Requires the ``[paper]`` extra.
+
+The adapter returns the same :class:`RetrievalDataset` consumed everywhere
+else in the framework, so swapping the synthetic dataset for a real one is a
+one-line change in any pipeline.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from embedopt.evaluation.datasets import RetrievalDataset
+
+if TYPE_CHECKING:
+    pass
+
+DEFAULT_BEIR_NAMES: tuple[str, ...] = (
+    "scifact",
+    "nfcorpus",
+    "arguana",
+    "fiqa",
+    "trec-covid",
+)
+
+
+def load_beir_dataset_local(
+    root: str | Path,
+    *,
+    name: str | None = None,
+    split: str = "test",
+    max_corpus: int | None = None,
+    max_queries: int | None = None,
+) -> RetrievalDataset:
+    """Load a BEIR dataset laid out as ``root/{corpus.jsonl, queries.jsonl, qrels/<split>.tsv}``.
+
+    The string IDs in the JSONL files are remapped to consecutive integers
+    so the rest of the framework can treat IDs as numpy row indices.
+
+    Parameters
+    ----------
+    root:
+        Directory containing the BEIR files for one dataset.
+    name:
+        Optional name override; defaults to ``root.name``.
+    split:
+        Qrels split to load (BEIR ships ``train``/``dev``/``test``).
+    max_corpus, max_queries:
+        Optional caps for fast iteration on large datasets. ``None`` keeps all.
+    """
+    root_path = Path(root)
+    if not root_path.exists():
+        raise FileNotFoundError(f"BEIR dataset directory not found: {root_path}")
+    corpus_path = root_path / "corpus.jsonl"
+    queries_path = root_path / "queries.jsonl"
+    qrels_path = root_path / "qrels" / f"{split}.tsv"
+    for p in (corpus_path, queries_path, qrels_path):
+        if not p.exists():
+            raise FileNotFoundError(f"Missing BEIR file: {p}")
+
+    # Pass 1: read corpus, assign integer ids, store text.
+    corpus_text: list[str] = []
+    corpus_id_to_idx: dict[str, int] = {}
+    with corpus_path.open(encoding="utf-8") as f:
+        for line in f:
+            row = json.loads(line)
+            cid = str(row["_id"])
+            text = (str(row.get("title", "")) + " " + str(row.get("text", ""))).strip()
+            corpus_id_to_idx[cid] = len(corpus_text)
+            corpus_text.append(text)
+            if max_corpus is not None and len(corpus_text) >= max_corpus:
+                break
+
+    # Pass 2: read queries the same way.
+    query_text: list[str] = []
+    query_id_to_idx: dict[str, int] = {}
+    with queries_path.open(encoding="utf-8") as f:
+        for line in f:
+            row = json.loads(line)
+            qid = str(row["_id"])
+            query_id_to_idx[qid] = len(query_text)
+            query_text.append(str(row.get("text", "")))
+            if max_queries is not None and len(query_text) >= max_queries:
+                break
+
+    # Pass 3: qrels TSV. Header is "query-id\tcorpus-id\tscore".
+    qrels: dict[int, dict[int, float]] = {}
+    with qrels_path.open(encoding="utf-8") as f:
+        header = f.readline()
+        if not header.lower().startswith(("query-id", "query_id")):
+            f.seek(0)  # no header
+        for line in f:
+            parts = line.strip().split("\t")
+            if len(parts) < 3:
+                continue
+            qid_s, cid_s, score_s = parts[0], parts[1], parts[2]
+            if qid_s not in query_id_to_idx or cid_s not in corpus_id_to_idx:
+                # Truncated to max_corpus / max_queries; skip dangling refs.
+                continue
+            qi = query_id_to_idx[qid_s]
+            ci = corpus_id_to_idx[cid_s]
+            qrels.setdefault(qi, {})[ci] = float(score_s)
+
+    return RetrievalDataset(
+        name=name or root_path.name,
+        corpus=corpus_text,
+        queries=query_text,
+        qrels=qrels,
+    )
+
+
+def load_beir_dataset_hf(
+    name: str,
+    *,
+    split: str = "test",
+    cache_dir: str | None = None,
+    max_corpus: int | None = None,
+    max_queries: int | None = None,
+) -> RetrievalDataset:
+    """Load a BEIR dataset from HuggingFace ``BeIR/<name>``.
+
+    Requires ``datasets`` (install via the ``[paper]`` extra). The
+    HuggingFace BEIR mirror exposes three configs per dataset: ``corpus``,
+    ``queries``, and ``qrels``.
+    """
+    try:
+        from datasets import load_dataset  # type: ignore[import-not-found]
+    except ModuleNotFoundError as exc:  # pragma: no cover - exercised at runtime
+        raise ModuleNotFoundError(
+            "load_beir_dataset_hf requires the 'datasets' package; "
+            "install with: pip install -e .[paper]"
+        ) from exc
+
+    corpus_ds = load_dataset(f"BeIR/{name}", "corpus", cache_dir=cache_dir)["corpus"]
+    queries_ds = load_dataset(f"BeIR/{name}", "queries", cache_dir=cache_dir)["queries"]
+    qrels_ds = load_dataset(f"BeIR/{name}-qrels", cache_dir=cache_dir)[split]
+
+    corpus_text: list[str] = []
+    corpus_id_to_idx: dict[str, int] = {}
+    for row in corpus_ds:
+        cid = str(row["_id"])
+        text = (str(row.get("title", "")) + " " + str(row.get("text", ""))).strip()
+        corpus_id_to_idx[cid] = len(corpus_text)
+        corpus_text.append(text)
+        if max_corpus is not None and len(corpus_text) >= max_corpus:
+            break
+
+    query_text: list[str] = []
+    query_id_to_idx: dict[str, int] = {}
+    for row in queries_ds:
+        qid = str(row["_id"])
+        query_id_to_idx[qid] = len(query_text)
+        query_text.append(str(row.get("text", "")))
+        if max_queries is not None and len(query_text) >= max_queries:
+            break
+
+    qrels: dict[int, dict[int, float]] = {}
+    for row in qrels_ds:
+        qid_s = str(row["query-id"])
+        cid_s = str(row["corpus-id"])
+        if qid_s not in query_id_to_idx or cid_s not in corpus_id_to_idx:
+            continue
+        qrels.setdefault(query_id_to_idx[qid_s], {})[corpus_id_to_idx[cid_s]] = float(row["score"])
+
+    return RetrievalDataset(
+        name=f"beir/{name}",
+        corpus=corpus_text,
+        queries=query_text,
+        qrels=qrels,
+    )

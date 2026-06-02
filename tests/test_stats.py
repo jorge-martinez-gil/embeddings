@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from embedopt.evaluation.stats import (
+    paired_bootstrap_ci,
+    paired_randomization_test,
+    per_query_ndcg_at_k,
+    per_query_recall_at_k,
+)
+
+
+def test_per_query_ndcg_perfect_ranking() -> None:
+    scores = np.array([[0.9, 0.5, 0.1]], dtype=np.float32)
+    qrels = {0: {0: 1.0}}
+    out = per_query_ndcg_at_k(scores, qrels, k=3)
+    assert out[0] == pytest.approx(1.0)
+
+
+def test_per_query_recall_partial() -> None:
+    scores = np.array([[0.9, 0.5, 0.1]], dtype=np.float32)
+    qrels = {0: {0: 1.0, 2: 1.0}}
+    out = per_query_recall_at_k(scores, qrels, k=2)
+    assert out[0] == pytest.approx(0.5)
+
+
+def test_paired_bootstrap_ci_zero_delta_brackets_zero() -> None:
+    a = {q: 0.5 + 0.001 * q for q in range(40)}
+    b = {q: 0.5 + 0.001 * q for q in range(40)}
+    ci = paired_bootstrap_ci(a, b, n_resamples=400, seed=0)
+    assert ci.lower <= 0.0 <= ci.upper
+
+
+def test_paired_bootstrap_ci_positive_delta_excludes_zero() -> None:
+    a = {q: 0.7 for q in range(40)}
+    b = {q: 0.5 for q in range(40)}
+    ci = paired_bootstrap_ci(a, b, n_resamples=400, seed=0)
+    assert ci.mean_delta == pytest.approx(0.2)
+    assert ci.lower > 0.0
+
+
+def test_paired_randomization_test_reports_small_p_value_for_consistent_delta() -> None:
+    a = {q: 0.7 for q in range(20)}
+    b = {q: 0.5 for q in range(20)}
+    test = paired_randomization_test(a, b, n_resamples=1000, seed=0)
+    assert test.mean_delta == pytest.approx(0.2)
+    assert test.p_value < 0.05
+    assert test.significant_05

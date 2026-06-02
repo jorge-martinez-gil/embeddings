@@ -1,0 +1,349 @@
+"""End-to-end paper experiments runner (Colab A100 friendly).
+
+What it does
+------------
+For each (backbone, dataset) pair, this script:
+
+1. Encodes the BEIR corpus and queries on whatever device sentence-transformers
+   picks up (A100 if visible to torch, otherwise CPU).
+2. Runs the multi-objective compression sweep over the framework's default
+   space *plus* two-stage compositions (truncate -> PQ, truncate -> binary).
+3. Computes per-query nDCG@10 for every spec and reports a paired-bootstrap
+   95% CI vs. the identity baseline.
+4. Writes a tidy CSV of all candidates and a JSON summary of the Pareto front
+   and hypervolume to ``--output-dir`` (default: ``./results``).
+
+How to run on Google Colab (A100 runtime)
+-----------------------------------------
+Open a fresh Colab, switch the runtime to *GPU* (A100 if available), then:
+
+.. code-block:: python
+
+    !git clone https://github.com/<your-username>/embeddings.git
+    %cd embeddings
+    !pip install -e .[paper]
+    !python scripts/run_paper_experiments.py \
+        --backbones e5-base bge-base \
+        --datasets beir-local:/content/scifact beir-local:/content/nfcorpus \
+        --output-dir results
+
+If you don't have BEIR data locally yet, fetch the official archive (one-time):
+
+.. code-block:: python
+
+    !pip install beir
+    from beir.util import download_and_unzip
+    for name in ("scifact", "nfcorpus", "arguana", "fiqa", "trec-covid"):
+        download_and_unzip(
+            f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{name}.zip",
+            "/content",
+        )
+
+Smoke mode
+----------
+Pass ``--smoke`` to run with the deterministic ``hashing`` backbone on the
+synthetic dataset; useful for verifying the script end-to-end without GPU.
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import time
+from collections.abc import Mapping
+from pathlib import Path
+from typing import Any, cast
+
+import numpy as np
+
+from embedopt.compression.registry import build_compressor, spec_label
+from embedopt.evaluation.beir import load_beir_dataset_local
+from embedopt.evaluation.datasets import RetrievalDataset, make_synthetic_retrieval
+from embedopt.evaluation.stats import (
+    BootstrapCI,
+    paired_bootstrap_ci,
+    per_query_ndcg_at_k,
+)
+from embedopt.models.backbones import TextEmbedder
+from embedopt.models.factory import PrefixedEmbedder, make_backbone
+from embedopt.moo.hypervolume import hypervolume
+from embedopt.moo.objectives import Objective, to_min_matrix
+from embedopt.moo.pareto import pareto_indices
+from embedopt.profiling.aggregator import profile_compressor
+from embedopt.utils.manifest import RunManifest
+from embedopt.utils.seeding import set_global_seed
+from embedopt.utils.types import as_float_array
+
+
+def _encode_split(
+    embedder: TextEmbedder, texts: list[str], *, kind: str, batch_size: int
+) -> np.ndarray:
+    """Encode in batches; uses query/passage prefixes if the embedder supports them."""
+    out: list[list[float]] = []
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i : i + batch_size]
+        if isinstance(embedder, PrefixedEmbedder):
+            out.extend(embedder.encode(batch, kind=cast(Any, kind)))
+        else:
+            out.extend(embedder.encode(batch))
+    return as_float_array(out)
+
+
+def _composition_specs(dim: int) -> list[Mapping[str, Any]]:
+    """Two-stage compositions to add on top of the default search space."""
+    out: list[Mapping[str, Any]] = []
+    for keep in (64, 128):
+        if keep > dim:
+            continue
+        for m in (8, 16):
+            if keep % m == 0:
+                out.append(
+                    {
+                        "name": "composed",
+                        "stages": [
+                            {"name": "truncate", "keep_dim": keep},
+                            {"name": "product_quantize", "n_subspaces": m, "n_bits": 8},
+                        ],
+                    }
+                )
+        out.append(
+            {
+                "name": "composed",
+                "stages": [
+                    {"name": "truncate", "keep_dim": keep},
+                    {"name": "binary"},
+                ],
+            }
+        )
+    return out
+
+
+def _default_search_space(dim: int) -> list[Mapping[str, Any]]:
+    truncate_dims = [d for d in (32, 64, 128, 256, 512) if d <= dim]
+    space: list[Mapping[str, Any]] = [{"name": "identity"}]
+    for kd in truncate_dims:
+        space.append({"name": "truncate", "keep_dim": kd})
+    space.append({"name": "scalar_int8"})
+    space.append({"name": "binary"})
+    for m in (8, 16, 32):
+        if dim % m == 0:
+            space.append({"name": "product_quantize", "n_subspaces": m, "n_bits": 8})
+    return space + _composition_specs(dim)
+
+
+def _resolve_dataset(spec: str) -> RetrievalDataset:
+    if spec == "synthetic":
+        return make_synthetic_retrieval(n_queries_per_topic=4, seed=0)
+    if spec.startswith("beir-local:"):
+        root = spec.split(":", 1)[1]
+        return load_beir_dataset_local(root)
+    raise ValueError(
+        f"Unknown dataset spec {spec!r}. Use 'synthetic' or 'beir-local:/path/to/dir'."
+    )
+
+
+def run_one(
+    *,
+    backbone_name: str,
+    dataset_spec: str,
+    output_dir: Path,
+    seed: int,
+    batch_size: int,
+    profile_repeats: int,
+    bootstrap_resamples: int,
+) -> dict[str, Any]:
+    """Run the full sweep for one (backbone, dataset) pair and write artifacts.
+
+    Returns the manifest dict so callers can build a top-level summary.
+    """
+    set_global_seed(seed)
+    embedder = make_backbone(backbone_name)
+    dataset = _resolve_dataset(dataset_spec)
+    print(
+        f"[{backbone_name} | {dataset.name}] "
+        f"corpus={len(dataset.corpus)} queries={len(dataset.queries)}"
+    )
+
+    t0 = time.time()
+    corpus_vec = _encode_split(
+        embedder, list(dataset.corpus), kind="passage", batch_size=batch_size
+    )
+    query_vec = _encode_split(embedder, list(dataset.queries), kind="query", batch_size=batch_size)
+    encode_secs = time.time() - t0
+    dim = corpus_vec.shape[1]
+    print(f"  encoded in {encode_secs:.1f}s; dim={dim}")
+
+    specs = _default_search_space(dim)
+
+    # First evaluate identity to anchor the bootstrap deltas.
+    identity = build_compressor({"name": "identity"})
+    identity_compressed = identity.transform(corpus_vec)
+    identity_scores = identity.score(query_vec, identity_compressed)
+    identity_per_q = per_query_ndcg_at_k(identity_scores, dataset.qrels, k=10)
+
+    rows: list[dict[str, Any]] = []
+    objective_rows: list[dict[str, float]] = []
+    for spec in specs:
+        compressor = build_compressor(spec)
+        stats, compressed = profile_compressor(
+            compressor,
+            corpus_vec,
+            query_vec,
+            n_repeats=profile_repeats,
+            n_warmup=2,
+        )
+        scores = compressor.score(query_vec, compressed)
+        per_q = per_query_ndcg_at_k(scores, dataset.qrels, k=10)
+        ndcg10 = float(np.mean(list(per_q.values()))) if per_q else 0.0
+        ci: BootstrapCI | None
+        try:
+            ci = paired_bootstrap_ci(
+                per_q,
+                identity_per_q,
+                n_resamples=bootstrap_resamples,
+                seed=seed,
+            )
+        except ValueError:
+            ci = None
+        row = {
+            "backbone": backbone_name,
+            "dataset": dataset.name,
+            "spec": spec_label(spec),
+            "ndcg_at_10": ndcg10,
+            "delta_vs_identity": ci.mean_delta if ci else None,
+            "ci_lower": ci.lower if ci else None,
+            "ci_upper": ci.upper if ci else None,
+            "bytes_per_vector": stats.bytes_per_vector,
+            "corpus_bytes": stats.corpus_bytes,
+            "query_latency_ms": stats.query_latency_ms,
+            "query_p95_ms": stats.query_p95_ms,
+        }
+        rows.append(row)
+        objective_rows.append(
+            {
+                "ndcg_at_10": ndcg10,
+                "bytes_per_vector": float(stats.bytes_per_vector),
+                "query_latency_ms": stats.query_latency_ms,
+            }
+        )
+        ci_str = f"  Δ={ci.mean_delta:+.4f} " f"[{ci.lower:+.4f}, {ci.upper:+.4f}]" if ci else ""
+        print(
+            f"  {row['spec']:<60s} nDCG@10={ndcg10:.4f}  "
+            f"B/v={stats.bytes_per_vector:>5d}  "
+            f"lat={stats.query_latency_ms:6.2f}ms{ci_str}"
+        )
+
+    objectives = [
+        Objective(name="ndcg_at_10", sense="max"),
+        Objective(name="bytes_per_vector", sense="min"),
+        Objective(name="query_latency_ms", sense="min"),
+    ]
+    pts = to_min_matrix(objectives, objective_rows)
+    pareto = pareto_indices(pts)
+    if pts.size:
+        ref = pts.max(axis=0) + np.abs(pts.max(axis=0)) * 0.05 + 1e-6
+        hv = hypervolume(pts[pareto], ref)
+    else:
+        hv = 0.0
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    base = f"{backbone_name}__{dataset.name.replace('/', '_')}"
+    csv_path = output_dir / f"{base}__candidates.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    manifest = RunManifest(
+        name=base,
+        config={
+            "backbone": backbone_name,
+            "dataset_spec": dataset_spec,
+            "dim": int(dim),
+            "n_corpus": int(len(dataset.corpus)),
+            "n_queries": int(len(dataset.queries)),
+            "specs": [spec_label(s) for s in specs],
+            "encode_secs": encode_secs,
+            "profile_repeats": profile_repeats,
+            "bootstrap_resamples": bootstrap_resamples,
+        },
+        seed=seed,
+        extra={
+            "pareto_specs": [rows[i]["spec"] for i in pareto],
+            "hypervolume": hv,
+            "csv_path": str(csv_path),
+        },
+    )
+    manifest_path = manifest.write(output_dir / f"{base}__manifest.json")
+    print(f"  HV={hv:.6f}  pareto={len(pareto)}  -> {csv_path.name}")
+    return {
+        "backbone": backbone_name,
+        "dataset": dataset.name,
+        "manifest_path": str(manifest_path),
+        "csv_path": str(csv_path),
+        "hypervolume": hv,
+        "n_pareto": len(pareto),
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--backbones",
+        nargs="+",
+        default=["hashing"],
+        help="Backbone names (see embedopt.models.factory.list_backbones()).",
+    )
+    parser.add_argument(
+        "--datasets",
+        nargs="+",
+        default=["synthetic"],
+        help=(
+            "Dataset specs. 'synthetic' uses the deterministic synthetic suite. "
+            "'beir-local:/path/to/<name>' loads a local BEIR-formatted directory."
+        ),
+    )
+    parser.add_argument("--output-dir", type=Path, default=Path("results"))
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--batch-size", type=int, default=64)
+    parser.add_argument("--profile-repeats", type=int, default=10)
+    parser.add_argument("--bootstrap-resamples", type=int, default=2000)
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="Shortcut: backbone=hashing, dataset=synthetic, tiny budgets.",
+    )
+    args = parser.parse_args()
+
+    if args.smoke:
+        args.backbones = ["hashing"]
+        args.datasets = ["synthetic"]
+        args.profile_repeats = 3
+        args.bootstrap_resamples = 200
+
+    summary: list[dict[str, Any]] = []
+    for backbone in args.backbones:
+        for ds in args.datasets:
+            try:
+                summary.append(
+                    run_one(
+                        backbone_name=backbone,
+                        dataset_spec=ds,
+                        output_dir=args.output_dir,
+                        seed=args.seed,
+                        batch_size=args.batch_size,
+                        profile_repeats=args.profile_repeats,
+                        bootstrap_resamples=args.bootstrap_resamples,
+                    )
+                )
+            except Exception as exc:  # pragma: no cover - paper-script logging
+                print(f"!! {backbone} on {ds} failed: {exc}")
+    summary_path = args.output_dir / "summary.json"
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    print(f"\nWrote {summary_path}")
+
+
+if __name__ == "__main__":
+    main()

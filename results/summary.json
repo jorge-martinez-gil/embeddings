@@ -1,0 +1,83 @@
+[
+  {
+    "backbone": "e5-base",
+    "dataset": "scifact",
+    "manifest_path": "results/e5-base__scifact__manifest.json",
+    "csv_path": "results/e5-base__scifact__candidates.csv",
+    "index_csv_path": "results/e5-base__scifact__index.csv",
+    "hypervolume": 12921.100439841804,
+    "n_pareto": 26
+  },
+  {
+    "backbone": "e5-base",
+    "dataset": "nfcorpus",
+    "manifest_path": "results/e5-base__nfcorpus__manifest.json",
+    "csv_path": "results/e5-base__nfcorpus__candidates.csv",
+    "index_csv_path": "results/e5-base__nfcorpus__index.csv",
+    "hypervolume": 4552.9886784059045,
+    "n_pareto": 19
+  },
+  {
+    "backbone": "e5-base",
+    "dataset": "arguana",
+    "manifest_path": "results/e5-base__arguana__manifest.json",
+    "csv_path": "results/e5-base__arguana__candidates.csv",
+    "index_csv_path": "results/e5-base__arguana__index.csv",
+    "hypervolume": 12792.345377998907,
+    "n_pareto": 20
+  },
+  {
+    "backbone": "bge-base",
+    "dataset": "scifact",
+    "manifest_path": "results/bge-base__scifact__manifest.json",
+    "csv_path": "results/bge-base__scifact__candidates.csv",
+    "index_csv_path": "results/bge-base__scifact__index.csv",
+    "hypervolume": 13233.249573238692,
+    "n_pareto": 28
+  },
+  {
+    "backbone": "bge-base",
+    "dataset": "nfcorpus",
+    "manifest_path": "results/bge-base__nfcorpus__manifest.json",
+    "csv_path": "results/bge-base__nfcorpus__candidates.csv",
+    "index_csv_path": "results/bge-base__nfcorpus__index.csv",
+    "hypervolume": 4268.502628231836,
+    "n_pareto": 21
+  },
+  {
+    "backbone": "bge-base",
+    "dataset": "arguana",
+    "manifest_path": "results/bge-base__arguana__manifest.json",
+    "csv_path": "results/bge-base__arguana__candidates.csv",
+    "index_csv_path": "results/bge-base__arguana__index.csv",
+    "hypervolume": 15745.77940385512,
+    "n_pareto": 24
+  },
+  {
+    "backbone": "mxbai-large",
+    "dataset": "scifact",
+    "manifest_path": "results/mxbai-large__scifact__manifest.json",
+    "csv_path": "results/mxbai-large__scifact__candidates.csv",
+    "index_csv_path": "results/mxbai-large__scifact__index.csv",
+    "hypervolume": 28951.704541782707,
+    "n_pareto": 27
+  },
+  {
+    "backbone": "mxbai-large",
+    "dataset": "nfcorpus",
+    "manifest_path": "results/mxbai-large__nfcorpus__manifest.json",
+    "csv_path": "results/mxbai-large__nfcorpus__candidates.csv",
+    "index_csv_path": "results/mxbai-large__nfcorpus__index.csv",
+    "hypervolume": 7641.98031589074,
+    "n_pareto": 26
+  },
+  {
+    "backbone": "mxbai-large",
+    "dataset": "arguana",
+    "manifest_path": "results/mxbai-large__arguana__manifest.json",
+    "csv_path": "results/mxbai-large__arguana__candidates.csv",
+    "index_csv_path": "results/mxbai-large__arguana__index.csv",
+    "hypervolume": 33749.697912235104,
+    "n_pareto": 25
+  }
+]

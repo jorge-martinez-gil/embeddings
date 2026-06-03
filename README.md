@@ -17,8 +17,6 @@ Implementation note: the public method and paper contribution are now called
 **EmbedCatalog**. The Python package and CLI are still exposed as `embedopt` for
 backward compatibility with existing scripts, manifests, and experiment logs.
 
-![Pareto frontier across quality and storage](figures/fig_pair_pareto_frontiers.png)
-
 ## Why This Matters
 
 Modern retrieval systems often store one dense vector per object. At production
@@ -50,7 +48,6 @@ and TREC-COVID.
 | ANN execution changes the deployment frontier. | The representation and index backend should be selected together. | `results/*__index.csv`, `figures/fig_index_tradeoff.png` |
 | Every reported number is tied to a manifest. | Results are replayable from config, seed, package version, and platform metadata. | `results/*__manifest.json`, `results/summary.json` |
 
-![Storage mode comparison](figures/fig_storage_modes_bar.png)
 
 ## Claim-To-Artifact Map
 

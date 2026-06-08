@@ -127,8 +127,7 @@ class FaissIVFIndex:
             import faiss
         except ModuleNotFoundError as exc:  # pragma: no cover - optional path
             raise ModuleNotFoundError(
-                "FAISS IVF backend requires faiss. "
-                "Install faiss-cpu (or faiss-gpu)."
+                "FAISS IVF backend requires faiss. " "Install faiss-cpu (or faiss-gpu)."
             ) from exc
         arr = np.ascontiguousarray(vectors, dtype=np.float32)
         n, d = int(arr.shape[0]), int(arr.shape[1])
@@ -140,9 +139,7 @@ class FaissIVFIndex:
         index = faiss.IndexIVFFlat(quantizer, d, nlist, faiss.METRIC_INNER_PRODUCT)
         index.train(arr)
         index.add(arr)
-        index.nprobe = (
-            self.nprobe if self.nprobe is not None else max(1, nlist // 8)
-        )
+        index.nprobe = self.nprobe if self.nprobe is not None else max(1, nlist // 8)
         # FAISS keeps a raw pointer to the quantizer; hold a Python
         # reference so it survives as long as ``self._index`` does. Do
         # NOT set ``index.own_fields = True`` — that double-frees the
@@ -213,15 +210,12 @@ class FaissIVFPQIndex:
             import faiss
         except ModuleNotFoundError as exc:  # pragma: no cover - optional path
             raise ModuleNotFoundError(
-                "FAISS IVF-PQ backend requires faiss. "
-                "Install faiss-cpu (or faiss-gpu)."
+                "FAISS IVF-PQ backend requires faiss. " "Install faiss-cpu (or faiss-gpu)."
             ) from exc
         arr = np.ascontiguousarray(vectors, dtype=np.float32)
         n, d = int(arr.shape[0]), int(arr.shape[1])
         if d % self.m != 0:
-            raise ValueError(
-                f"IVF-PQ requires dim ({d}) divisible by m ({self.m})"
-            )
+            raise ValueError(f"IVF-PQ requires dim ({d}) divisible by m ({self.m})")
         if self.n_bits < 1 or self.n_bits > 8:
             raise ValueError("IVF-PQ n_bits must be between 1 and 8")
         self._dim = d
@@ -247,15 +241,13 @@ class FaissIVFPQIndex:
         )
         index.train(arr)
         index.add(arr)
-        index.nprobe = (
-            self.nprobe if self.nprobe is not None else max(1, nlist // 8)
-        )
+        index.nprobe = self.nprobe if self.nprobe is not None else max(1, nlist // 8)
         # See note in FaissIVFIndex.build: keep a Python reference to the
         # quantizer instead of setting ``own_fields = True``.
         self._quantizer = quantizer
         self._index = index
 
-# (Sentinel comment to anchor the next Edit; the OPQ class follows below.)
+    # (Sentinel comment to anchor the next Edit; the OPQ class follows below.)
 
     def search(self, queries: FloatArray, *, k: int) -> tuple[FloatArray, np.ndarray]:
         if self._index is None:
@@ -312,8 +304,7 @@ class FaissHNSWIndex:
             import faiss
         except ModuleNotFoundError as exc:  # pragma: no cover - optional path
             raise ModuleNotFoundError(
-                "FAISS HNSW backend requires faiss. "
-                "Install faiss-cpu (or faiss-gpu)."
+                "FAISS HNSW backend requires faiss. " "Install faiss-cpu (or faiss-gpu)."
             ) from exc
         arr = np.ascontiguousarray(vectors, dtype=np.float32)
         d = int(arr.shape[1])
@@ -381,8 +372,7 @@ class FaissOPQIndex:
             import faiss
         except ModuleNotFoundError as exc:  # pragma: no cover - optional path
             raise ModuleNotFoundError(
-                "FAISS OPQ backend requires faiss. "
-                "Install faiss-cpu (or faiss-gpu)."
+                "FAISS OPQ backend requires faiss. " "Install faiss-cpu (or faiss-gpu)."
             ) from exc
         arr = np.ascontiguousarray(vectors, dtype=np.float32)
         n, d = int(arr.shape[0]), int(arr.shape[1])

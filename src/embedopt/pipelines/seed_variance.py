@@ -110,9 +110,7 @@ def evaluate_compressor_seed_variance(
     """
     if corpus is None or queries is None or qrels is None:
         if embedder is None or dataset is None:
-            raise ValueError(
-                "Pass either embedder+dataset or corpus/queries/qrels"
-            )
+            raise ValueError("Pass either embedder+dataset or corpus/queries/qrels")
         corpus = as_float_array(embedder.encode(list(dataset.corpus)))
         queries = as_float_array(embedder.encode(list(dataset.queries)))
         qrels = dataset.qrels

@@ -23,7 +23,7 @@ storage axis comparable between PQ and OPQ so the catalog row reads
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, cast
 
 import numpy as np
@@ -65,9 +65,7 @@ class OptimizedProductQuantizeCompressor:
 
     def _validate(self, dim: int) -> None:
         if dim % self.n_subspaces != 0:
-            raise ValueError(
-                f"Embedding dim {dim} not divisible by n_subspaces={self.n_subspaces}"
-            )
+            raise ValueError(f"Embedding dim {dim} not divisible by n_subspaces={self.n_subspaces}")
         if self.n_bits < 1 or self.n_bits > 8:
             raise ValueError("n_bits must be between 1 and 8")
 
@@ -139,16 +137,14 @@ class OptimizedProductQuantizeCompressor:
 
     def score(self, queries: FloatArray, corpus: CompressedSet) -> FloatArray:
         if not self._trained:
-            raise RuntimeError(
-                "OptimizedProductQuantizeCompressor must be fit before scoring"
-            )
+            raise RuntimeError("OptimizedProductQuantizeCompressor must be fit before scoring")
         codes = corpus.codes
         decoded = self._decode(codes)
         norms = np.linalg.norm(decoded, axis=1, keepdims=True)
         norms = np.where(norms == 0.0, 1.0, norms)
         decoded_norm = (decoded / norms).astype(np.float32, copy=False)
         sims = (queries @ decoded_norm.T).astype(np.float32, copy=False)
-        return cast(FloatArray, sims)
+        return sims
 
     def bytes_per_vector(self, dim: int) -> int:
         """Packed PQ-code size in bytes.

@@ -52,15 +52,17 @@ where = ["src"]
 [tool.black]
 line-length = 100
 target-version = ["py311"]
+extend-exclude = "scripts/"
 
 [tool.isort]
 profile = "black"
 line_length = 100
+skip_glob = ["scripts/*.py"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-extend-exclude = ["notebooks"]
+extend-exclude = ["notebooks", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

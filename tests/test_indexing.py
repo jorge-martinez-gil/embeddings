@@ -213,8 +213,13 @@ def test_faiss_hnsw_evaluate_dense_index() -> None:
     corpus = _ann_corpus(seed=11)
     qrels = {i: {i: 1.0} for i in range(8)}
     out = evaluate_dense_index(
-        corpus_vectors=corpus, query_vectors=corpus[:8], qrels=qrels,
-        backend="faiss-hnsw", k=5, n_repeats=2, n_warmup=1,
+        corpus_vectors=corpus,
+        query_vectors=corpus[:8],
+        qrels=qrels,
+        backend="faiss-hnsw",
+        k=5,
+        n_repeats=2,
+        n_warmup=1,
     )
     assert out.backend == "faiss-hnsw"
     assert out.index_bytes > 0
@@ -255,8 +260,13 @@ def test_faiss_opq_evaluate_dense_index() -> None:
     corpus = _ann_corpus(seed=15)
     qrels = {i: {i: 1.0} for i in range(8)}
     out = evaluate_dense_index(
-        corpus_vectors=corpus, query_vectors=corpus[:8], qrels=qrels,
-        backend="faiss-opq", k=5, n_repeats=2, n_warmup=1,
+        corpus_vectors=corpus,
+        query_vectors=corpus[:8],
+        qrels=qrels,
+        backend="faiss-opq",
+        k=5,
+        n_repeats=2,
+        n_warmup=1,
     )
     assert out.backend == "faiss-opq"
     assert out.index_bytes > 0

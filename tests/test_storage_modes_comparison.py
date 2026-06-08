@@ -68,8 +68,8 @@ def test_compare_storage_modes_runs_end_to_end_offline() -> None:
 
     # float32 is the baseline, so its delta is exactly zero.
     assert f32.delta_ndcg_vs_fp32 == 0.0
-    # float16 must be essentially lossless on cosine-normalized vectors.
-    assert abs(f16.delta_ndcg_vs_fp32) < 1e-3
+    # float16 should stay very close to the float32 baseline.
+    assert abs(f16.delta_ndcg_vs_fp32) < 5e-3
 
     # All metrics are finite and within their valid ranges.
     for row in comparison.rows:

@@ -32,7 +32,10 @@ def test_evaluate_seed_variance_pq_runs_offline() -> None:
     dataset = make_synthetic_retrieval(n_queries_per_topic=2, seed=0)
     spec = {"name": "product_quantize", "n_subspaces": 8, "n_bits": 4}
     summary = evaluate_compressor_seed_variance(
-        spec, seeds=[0, 1, 2], embedder=embedder, dataset=dataset,
+        spec,
+        seeds=[0, 1, 2],
+        embedder=embedder,
+        dataset=dataset,
     )
     assert summary.n_seeds == 3
     assert len(summary.rows) == 3
@@ -48,7 +51,10 @@ def test_evaluate_seed_variance_overrides_seed_in_spec() -> None:
     dataset = make_synthetic_retrieval(n_queries_per_topic=2, seed=0)
     spec = {"name": "product_quantize", "n_subspaces": 4, "n_bits": 4, "seed": 999}
     summary = evaluate_compressor_seed_variance(
-        spec, seeds=[7, 8], embedder=embedder, dataset=dataset,
+        spec,
+        seeds=[7, 8],
+        embedder=embedder,
+        dataset=dataset,
     )
     assert sorted(r.seed for r in summary.rows) == [7, 8]
 
@@ -61,6 +67,10 @@ def test_evaluate_seed_variance_accepts_preembedded_corpus() -> None:
     qrels = {i: {i: 1.0} for i in range(5)}
     spec = {"name": "product_quantize", "n_subspaces": 4, "n_bits": 4}
     summary = evaluate_compressor_seed_variance(
-        spec, seeds=[0, 1], corpus=corpus, queries=queries, qrels=qrels,
+        spec,
+        seeds=[0, 1],
+        corpus=corpus,
+        queries=queries,
+        qrels=qrels,
     )
     assert summary.n_seeds == 2

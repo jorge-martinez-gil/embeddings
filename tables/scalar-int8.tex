@@ -1,0 +1,28 @@
+\begin{table*}[t]
+\centering
+\small
+\caption{Scalar int8 vs.\ identity over per-query \ndcg{} across the 4\,$\times$\,4 matrix (16 backbone--dataset pairs). Storage drops $4\times$ uniformly. (Auto-generated from \texttt{results/} by \texttt{scripts/regen\_tables.py}.)}
+\label{tab:scalar-int8}
+\begin{tabular}{llrrrrr}
+\toprule
+Backbone & Dataset & \ndcg{} (identity) & \ndcg{} (scalar\_int8) & $\Delta$ & $p$-value & Storage red. \\
+\midrule
+E5-base & SciFact & 0.7196 & 0.7198 & $+0.0002$ & 0.9512 & 4$\times$ \\
+E5-base & NFCorpus & 0.3549 & 0.3554 & $+0.0006$ & 0.1072 & 4$\times$ \\
+E5-base & ArguAna & 0.3293 & 0.3288 & $-0.0006$ & 0.2482 & 4$\times$ \\
+E5-base & FiQA & 0.3986 & 0.4001 & $+0.0015$ & 0.1264 & 4$\times$ \\
+BGE-base & SciFact & 0.7416 & 0.7426 & $+0.0010$ & 1.0000 & 4$\times$ \\
+BGE-base & NFCorpus & 0.3752 & 0.3751 & $-0.0001$ & 0.9540 & 4$\times$ \\
+BGE-base & ArguAna & 0.4559 & 0.4557 & $-0.0002$ & 0.4891 & 4$\times$ \\
+BGE-base & FiQA & 0.4062 & 0.4059 & $-0.0003$ & 0.7115 & 4$\times$ \\
+MXBAI-large & SciFact & 0.7389 & 0.7388 & $-0.0001$ & 0.5725 & 4$\times$ \\
+MXBAI-large & NFCorpus & 0.3880 & 0.3877 & $-0.0003$ & 0.5227 & 4$\times$ \\
+MXBAI-large & ArguAna & 0.4674 & 0.4674 & $-0.0000$ & 0.9848 & 4$\times$ \\
+MXBAI-large & FiQA & 0.4529 & 0.4535 & $+0.0005$ & 0.0594 & 4$\times$ \\
+GTE-base & SciFact & 0.7618 & 0.7617 & $-0.0001$ & 0.5019 & 4$\times$ \\
+GTE-base & NFCorpus & 0.3799 & 0.3802 & $+0.0003$ & 0.2829 & 4$\times$ \\
+GTE-base & ArguAna & 0.4167 & 0.4166 & $-0.0001$ & 0.8634 & 4$\times$ \\
+GTE-base & FiQA & 0.4075 & 0.4069 & $-0.0006$ & 0.3597 & 4$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table*}

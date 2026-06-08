@@ -1,0 +1,28 @@
+\begin{table*}[t]
+\centering
+\small
+\caption{Main 4\,$\times$\,4 BEIR matrix: hypervolume (HV) and Pareto-set size from each manifest; ``Best $\le\!1\%$ loss'' is the smallest-storage candidate within $1\%$ relative of identity. HV scales are dataset-specific.}
+\label{tab:main-pareto}
+\begin{tabular}{llrrlrrr}
+\toprule
+Backbone & Dataset & HV & \#Pareto & Best $\le\!1\%$ loss spec & \ndcg & Bytes/vec & Storage red. \\
+\midrule
+E5-base & SciFact & 19{,}306.6 & 37 & scalar\_int8 & 0.7198 & 768 & 4.0$\times$ \\
+E5-base & NFCorpus & 8{,}598.0 & 23 & scalar\_int8 & 0.3554 & 768 & 4.0$\times$ \\
+E5-base & ArguAna & 1{,}889.2 & 28 & scalar\_int8 & 0.3288 & 768 & 4.0$\times$ \\
+E5-base & FiQA & 6{,}908.0 & 37 & scalar\_int8 & 0.4001 & 768 & 4.0$\times$ \\
+BGE-base & SciFact & 19{,}252.6 & 34 & scalar\_int8 & 0.7426 & 768 & 4.0$\times$ \\
+BGE-base & NFCorpus & 8{,}630.2 & 28 & scalar\_int8 & 0.3751 & 768 & 4.0$\times$ \\
+BGE-base & ArguAna & 2{,}501.7 & 34 & scalar\_int8 & 0.4557 & 768 & 4.0$\times$ \\
+BGE-base & FiQA & 7{,}118.4 & 39 & scalar\_int8 & 0.4059 & 768 & 4.0$\times$ \\
+MXBAI-large & SciFact & 29{,}368.8 & 36 & scalar\_int8 & 0.7388 & 1024 & 4.0$\times$ \\
+MXBAI-large & NFCorpus & 13{,}402.1 & 26 & scalar\_int8 & 0.3877 & 1024 & 4.0$\times$ \\
+MXBAI-large & ArguAna & 3{,}746.6 & 34 & scalar\_int8 & 0.4674 & 1024 & 4.0$\times$ \\
+MXBAI-large & FiQA & 11{,}209.9 & 35 & scalar\_int8 & 0.4535 & 1024 & 4.0$\times$ \\
+GTE-base & SciFact & 20{,}171.4 & 38 & scalar\_int8 & 0.7617 & 768 & 4.0$\times$ \\
+GTE-base & NFCorpus & 8{,}499.5 & 24 & scalar\_int8 & 0.3802 & 768 & 4.0$\times$ \\
+GTE-base & ArguAna & 2{,}338.4 & 36 & scalar\_int8 & 0.4166 & 768 & 4.0$\times$ \\
+GTE-base & FiQA & 7{,}236.2 & 38 & scalar\_int8 & 0.4069 & 768 & 4.0$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table*}

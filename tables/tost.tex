@@ -1,0 +1,44 @@
+\begin{table*}[t]
+\centering
+\small
+\caption{Equivalence (TOST) of the near-lossless codecs vs.\ identity, from the paired bootstrap CI (\texttt{scripts/regen\_tables.py} / \texttt{tost\_equivalence.py}). Equivalent at $\alpha{=}0.05$ when the $90\%$ CI of $\Delta\ndcg{}$ lies within $(-\epsilon,+\epsilon)$; columns use $\epsilon{=}0.01$ and $\epsilon{=}0.005$.}
+\label{tab:tost}
+\begin{tabular}{lllrrcc}
+\toprule
+Codec & Backbone & Dataset & $\Delta\ndcg{}$ & $90\%$ CI & Eq.\ $\epsilon{=}0.01$ & Eq.\ $\epsilon{=}0.005$ \\
+\midrule
+scalar\_int8 & E5-base & SciFact & $+0.0002$ & $[-0.0008,+0.0012]$ & Yes & Yes \\
+scalar\_int8 & E5-base & NFCorpus & $+0.0006$ & $[-0.0000,+0.0011]$ & Yes & Yes \\
+scalar\_int8 & E5-base & ArguAna & $-0.0006$ & $[-0.0014,+0.0002]$ & Yes & Yes \\
+scalar\_int8 & E5-base & FiQA & $+0.0015$ & $[-0.0001,+0.0031]$ & Yes & Yes \\
+scalar\_int8 & BGE-base & SciFact & $+0.0010$ & $[-0.0009,+0.0028]$ & Yes & Yes \\
+scalar\_int8 & BGE-base & NFCorpus & $-0.0001$ & $[-0.0007,+0.0005]$ & Yes & Yes \\
+scalar\_int8 & BGE-base & ArguAna & $-0.0002$ & $[-0.0005,+0.0002]$ & Yes & Yes \\
+scalar\_int8 & BGE-base & FiQA & $-0.0003$ & $[-0.0015,+0.0008]$ & Yes & Yes \\
+scalar\_int8 & MXBAI-large & SciFact & $-0.0001$ & $[-0.0005,+0.0002]$ & Yes & Yes \\
+scalar\_int8 & MXBAI-large & NFCorpus & $-0.0003$ & $[-0.0007,+0.0002]$ & Yes & Yes \\
+scalar\_int8 & MXBAI-large & ArguAna & $-0.0000$ & $[-0.0005,+0.0004]$ & Yes & Yes \\
+scalar\_int8 & MXBAI-large & FiQA & $+0.0005$ & $[+0.0001,+0.0010]$ & Yes & Yes \\
+scalar\_int8 & GTE-base & SciFact & $-0.0001$ & $[-0.0001,+0.0000]$ & Yes & Yes \\
+scalar\_int8 & GTE-base & NFCorpus & $+0.0003$ & $[-0.0001,+0.0007]$ & Yes & Yes \\
+scalar\_int8 & GTE-base & ArguAna & $-0.0001$ & $[-0.0007,+0.0006]$ & Yes & Yes \\
+scalar\_int8 & GTE-base & FiQA & $-0.0006$ & $[-0.0015,+0.0003]$ & Yes & Yes \\
+float16 & E5-base & SciFact & $+0.0004$ & $[-0.0002,+0.0009]$ & Yes & Yes \\
+float16 & E5-base & NFCorpus & $+0.0001$ & $[-0.0001,+0.0003]$ & Yes & Yes \\
+float16 & E5-base & ArguAna & $+0.0001$ & $[-0.0005,+0.0006]$ & Yes & Yes \\
+float16 & E5-base & FiQA & $-0.0003$ & $[-0.0020,+0.0013]$ & Yes & Yes \\
+float16 & BGE-base & SciFact & $-0.0015$ & $[-0.0032,+0.0003]$ & Yes & Yes \\
+float16 & BGE-base & NFCorpus & $-0.0001$ & $[-0.0004,+0.0002]$ & Yes & Yes \\
+float16 & BGE-base & ArguAna & $+0.0003$ & $[-0.0004,+0.0010]$ & Yes & Yes \\
+float16 & BGE-base & FiQA & $+0.0002$ & $[-0.0001,+0.0006]$ & Yes & Yes \\
+float16 & MXBAI-large & SciFact & $+0.0001$ & $[-0.0000,+0.0002]$ & Yes & Yes \\
+float16 & MXBAI-large & NFCorpus & $+0.0001$ & $[-0.0000,+0.0001]$ & Yes & Yes \\
+float16 & MXBAI-large & ArguAna & $-0.0003$ & $[-0.0006,+0.0001]$ & Yes & Yes \\
+float16 & MXBAI-large & FiQA & $-0.0002$ & $[-0.0009,+0.0005]$ & Yes & Yes \\
+float16 & GTE-base & SciFact & $-0.0002$ & $[-0.0005,+0.0000]$ & Yes & Yes \\
+float16 & GTE-base & NFCorpus & $+0.0002$ & $[-0.0001,+0.0006]$ & Yes & Yes \\
+float16 & GTE-base & ArguAna & $+0.0001$ & $[-0.0006,+0.0009]$ & Yes & Yes \\
+float16 & GTE-base & FiQA & $-0.0004$ & $[-0.0013,+0.0005]$ & Yes & Yes \\
+\bottomrule
+\end{tabular}
+\end{table*}

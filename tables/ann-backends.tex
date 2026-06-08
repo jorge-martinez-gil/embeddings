@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\small
+\caption{ANN backend summary across the main matrix (mean over successfully-built specs per backend). Build time and latency in ms; index size in MB.}
+\label{tab:ann-backends}
+\begin{tabular}{lrrrrr}
+\toprule
+Backend & Build (ms) & Index (MB) & Recall@10 & \ndcg{} & Median lat.\ (ms) \\
+\midrule
+\texttt{exact-numpy} & 0.0 & 62.5 & 1.0000 & 0.4872 & 44.084 \\
+\texttt{faiss-flat} & 524.0 & 62.5 & 0.9997 & 0.4871 & 31.647 \\
+\texttt{faiss-ivf} & 593.3 & 63.0 & 0.8850 & 0.4568 & 22.483 \\
+\texttt{faiss-ivfpq} & 1340.0 & 1.5 & 0.3508 & 0.2581 & 4.013 \\
+\texttt{faiss-hnsw} & 720.2 & 67.6 & 0.9907 & 0.4856 & 6.893 \\
+\texttt{faiss-opq} & 218507.2 & 3.8 & 0.4449 & 0.3219 & 4.384 \\
+\bottomrule
+\end{tabular}
+\end{table}

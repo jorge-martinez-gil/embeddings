@@ -1,0 +1,7 @@
+backbone,dataset,spec,index_backend,index_status,index_build_ms,index_bytes,index_query_latency_ms,index_query_p95_ms,index_recall_at_10,index_ndcg_at_10,index_exact_recall_at_10,index_error
+gte-base,arguana,identity,exact-numpy,ok,0.000,26646528,36.4483,0.0000,1.0000,0.4167,1.0000,
+gte-base,arguana,identity,faiss-flat,ok,580.954,26646573,26.0316,217.6812,0.9995,0.4168,0.9995,
+gte-base,arguana,identity,faiss-ivf,ok,136.696,27002499,8.1309,9.2327,0.9886,0.4146,0.9886,
+gte-base,arguana,identity,faiss-ivfpq,ok,744.154,1211836,9.9313,15.3491,0.5805,0.2863,0.5805,
+gte-base,arguana,identity,faiss-hnsw,ok,92.244,29002874,3.3387,3.9207,0.9999,0.4167,0.9999,
+gte-base,arguana,identity,faiss-opq,ok,127887.682,3215277,6.4738,6.5719,0.6080,0.3029,0.6080,

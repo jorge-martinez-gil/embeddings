@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Canonical vector-DB storage modes on one embedded corpus (storage-mode driver). $\Delta\ndcg{}$ is vs.\ float32.}
+\label{tab:storage-modes}
+\begin{tabular}{lrrrrrr}
+\toprule
+Mode & Bytes/vec & Comp. & \ndcg{} & Recall@10 & $\Delta\ndcg{}$ & Median lat.\ (ms) \\
+\midrule
+float32 & 3072 & 1$\times$ & 0.7017 & 0.8146 & $+0.0000$ & 3.000 \\
+float16 & 1536 & 2$\times$ & 0.7004 & 0.8146 & $-0.0012$ & 15.137 \\
+int8 & 768 & 4$\times$ & 0.7013 & 0.8146 & $-0.0004$ & 6.594 \\
+binary & 96 & 32$\times$ & 0.4119 & 0.5258 & $-0.2898$ & 0.909 \\
+pq(M=8,nbits=8) & 8 & 384$\times$ & 0.3758 & 0.5529 & $-0.3258$ & 0.157 \\
+pq(M=8,nbits=4) & 8 & 384$\times$ & 0.1369 & 0.2195 & $-0.5647$ & 0.076 \\
+\bottomrule
+\end{tabular}
+\end{table}

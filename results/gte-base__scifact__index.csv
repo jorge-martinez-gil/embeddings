@@ -1,0 +1,7 @@
+backbone,dataset,spec,index_backend,index_status,index_build_ms,index_bytes,index_query_latency_ms,index_query_p95_ms,index_recall_at_10,index_ndcg_at_10,index_exact_recall_at_10,index_error
+gte-base,scifact,identity,exact-numpy,ok,0.000,15922176,4.8876,0.0000,1.0000,0.7618,1.0000,
+gte-base,scifact,identity,faiss-flat,ok,145.352,15922221,4.2213,97.0794,1.0000,0.7618,1.0000,
+gte-base,scifact,identity,faiss-ivf,ok,50.034,16182459,1.6356,2.3205,0.8727,0.7079,0.8727,
+gte-base,scifact,identity,faiss-ivfpq,ok,367.950,1088220,9.3244,13.8267,0.3890,0.4508,0.3890,
+gte-base,scifact,identity,faiss-hnsw,ok,39.699,17329494,0.8257,0.8563,0.9980,0.7618,0.9980,
+gte-base,scifact,identity,faiss-opq,ok,128744.252,3187349,2.0354,2.0669,0.5000,0.4878,0.5000,

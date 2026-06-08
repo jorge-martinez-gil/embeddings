@@ -1,0 +1,7 @@
+backbone,dataset,spec,index_backend,index_status,index_build_ms,index_bytes,index_query_latency_ms,index_query_p95_ms,index_recall_at_10,index_ndcg_at_10,index_exact_recall_at_10,index_error
+gte-base,nfcorpus,identity,exact-numpy,ok,0.000,11160576,3.7968,0.0000,1.0000,0.3803,1.0000,
+gte-base,nfcorpus,identity,faiss-flat,ok,263.796,11160621,3.1123,133.6277,0.9994,0.3796,0.9994,
+gte-base,nfcorpus,identity,faiss-ivf,ok,80.255,11374579,7.3268,9.9752,0.7594,0.3337,0.7594,
+gte-base,nfcorpus,identity,faiss-ivfpq,ok,184.633,1029540,1.5842,1.8167,0.3446,0.2511,0.3446,
+gte-base,nfcorpus,identity,faiss-hnsw,ok,30.942,12146990,0.8045,0.8432,0.9926,0.3772,0.9926,
+gte-base,nfcorpus,identity,faiss-opq,ok,125992.382,3174949,1.9980,2.0249,0.4700,0.3313,0.4700,

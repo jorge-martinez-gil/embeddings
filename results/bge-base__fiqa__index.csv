@@ -1,0 +1,7 @@
+backbone,dataset,spec,index_backend,index_status,index_build_ms,index_bytes,index_query_latency_ms,index_query_p95_ms,index_recall_at_10,index_ndcg_at_10,index_exact_recall_at_10,index_error
+bge-base,fiqa,identity,exact-numpy,ok,0.000,177063936,116.2402,0.0000,1.0000,0.4062,1.0000,
+bge-base,fiqa,identity,faiss-flat,ok,1321.010,177063981,85.5424,303.5841,1.0000,0.4062,1.0000,
+bge-base,fiqa,identity,faiss-ivf,ok,2395.101,178264379,70.8971,77.5424,0.9772,0.3974,0.9772,
+bge-base,fiqa,identity,faiss-ivfpq,ok,3820.025,2448020,3.3263,4.2596,0.1995,0.1067,0.1995,
+bge-base,fiqa,identity,faiss-hnsw,ok,2029.903,192753066,10.1018,10.5324,0.9728,0.4009,0.9728,
+bge-base,fiqa,identity,faiss-opq,ok,169290.461,3606989,5.7989,19.4455,0.2554,0.1583,0.2554,

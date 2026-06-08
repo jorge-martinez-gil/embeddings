@@ -1,0 +1,29 @@
+\begin{table*}[t]
+\centering
+\small
+\caption{Smallest-storage candidate per pair at three quality thresholds (fraction of identity \ndcg{}). Tie-break: min bytes, then max \ndcg{}.}
+\label{tab:thresholds}
+\begin{tabular}{lllll}
+\toprule
+& & \multicolumn{1}{c}{$\ge\!99\%$ \ndcg{}} & \multicolumn{1}{c}{$\ge\!95\%$ \ndcg{}} & \multicolumn{1}{c}{$\ge\!90\%$ \ndcg{}} \\
+Backbone & Dataset & Spec (red.) & Spec (red.) & Spec (red.) \\
+\midrule
+E5-base & SciFact & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (48$\times$) \\
+E5-base & NFCorpus & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (48$\times$) \\
+E5-base & ArguAna & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) \\
+E5-base & FiQA & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) \\
+BGE-base & SciFact & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (48$\times$) & OPQ$(32,8)$ (96$\times$) \\
+BGE-base & NFCorpus & scalar\_int8 (4$\times$) & OPQ$(32,8)$ (96$\times$) & OPQ$(32,8)$ (96$\times$) \\
+BGE-base & ArguAna & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (48$\times$) & OPQ$(32,8)$ (96$\times$) \\
+BGE-base & FiQA & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) \\
+MXBAI-large & SciFact & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (64$\times$) & OPQ$(32,8)$ (128$\times$) \\
+MXBAI-large & NFCorpus & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (64$\times$) & OPQ$(32,8)$ (128$\times$) \\
+MXBAI-large & ArguAna & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (64$\times$) & OPQ$(32,8)$ (128$\times$) \\
+MXBAI-large & FiQA & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (64$\times$) \\
+GTE-base & SciFact & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (48$\times$) \\
+GTE-base & NFCorpus & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (48$\times$) & OPQ$(32,8)$ (96$\times$) \\
+GTE-base & ArguAna & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) & OPQ$(64,8)$ (48$\times$) \\
+GTE-base & FiQA & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) & scalar\_int8 (4$\times$) \\
+\bottomrule
+\end{tabular}
+\end{table*}

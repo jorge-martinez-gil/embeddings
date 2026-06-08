@@ -9,10 +9,6 @@ relevance judgments, it evaluates candidate vector layouts, measures retrieval
 quality, storage, and latency, and returns a statistically annotated Pareto
 catalog that operators can scan against their deployment budget.
 
-The repository is the artifact for the paper:
-
-> **[EA&B] Benchmarking Embedding Compression for Efficient Neural Retrieval**
-
 Implementation note: the public method and paper contribution are now called
 **EmbedCatalog**. The Python package and CLI are still exposed as `embedopt` for
 backward compatibility with existing scripts, manifests, and experiment logs.
